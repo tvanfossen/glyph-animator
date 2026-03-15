@@ -1,1 +1,1 @@
-"""Digit rendering: contours → structural layers for styles to consume."""
+"""Glyph rendering: contours → structural layers for styles to consume."""

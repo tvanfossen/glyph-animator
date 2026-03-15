@@ -38,14 +38,7 @@ class SingleGlyphGenerator(GeneratorBase):
 
         w, h = self._canvas_size(rendered)
         filename = f"{self._style.name}_{prefix}_{char}.json"
-        return self._build_and_save(
-            f"{prefix}-{char}",
-            w,
-            h,
-            layers,
-            filename,
-            frames=self._style.duration_frames + 30,
-        )
+        return self._build_and_save(f"{prefix}-{char}", w, h, layers, filename)
 
     def generate(self) -> list[Path]:
         """Generate for default digit set."""
