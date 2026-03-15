@@ -1,0 +1,53 @@
+repos:
+  # Universal
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: debug-statements
+      - id: check-merge-conflict
+
+  # Python formatting + linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # Cognitive complexity + max returns (ruff lacks these)
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.2
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          - flake8-cognitive-complexity
+          - flake8-functions
+        args:
+          - '--max-cognitive-complexity=15'
+          - '--max-returns-amount=3'
+          - '--max-line-length=99'
+          - '--extend-ignore=E,W,F'
+          - '--select=CCE,CFQ'
+
+  # C cognitive complexity (for viewer, Session 4)
+  - repo: https://github.com/brandon-arrendondo/knots
+    rev: 1.0.0
+    hooks:
+      - id: knots
+        args: [--cognitive-threshold=15]
+        files: '^viewer/.*\.[ch]$'
+
+  # Tests
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: .venv/bin/python -m pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
