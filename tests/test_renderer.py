@@ -1,14 +1,14 @@
 """Tests for digit renderer."""
 
 from glyph_animator.pipeline.glyph_pipeline import GlyphPipeline
-from glyph_animator.renderer.digit_renderer import DigitRenderer
+from glyph_animator.renderer.glyph_renderer import GlyphRenderer
 
 
-class TestDigitRenderer:
+class TestGlyphRenderer:
     def test_produces_rendered_digit(self, font_path):
         pipe = GlyphPipeline(font_path, segment_count=32)
         glyph = pipe.process_glyph("3")
-        renderer = DigitRenderer(n_outline_layers=3, n_arc_samples=50)
+        renderer = GlyphRenderer(n_outline_layers=3, n_arc_samples=50)
         rendered = renderer.render(glyph)
 
         assert rendered.glyph.character == "3"
@@ -19,7 +19,7 @@ class TestDigitRenderer:
     def test_arc_samples_count(self, font_path):
         pipe = GlyphPipeline(font_path, segment_count=32)
         glyph = pipe.process_glyph("8")
-        renderer = DigitRenderer(n_arc_samples=50)
+        renderer = GlyphRenderer(n_arc_samples=50)
         rendered = renderer.render(glyph)
 
         for samples in rendered.arc_samples:
@@ -29,7 +29,7 @@ class TestDigitRenderer:
         pipe = GlyphPipeline(font_path, segment_count=16)
         glyph = pipe.process_glyph("0")
         n_outlines = 2
-        renderer = DigitRenderer(n_outline_layers=n_outlines)
+        renderer = GlyphRenderer(n_outline_layers=n_outlines)
         rendered = renderer.render(glyph)
 
         n_contours = len(glyph.contours)
@@ -39,7 +39,7 @@ class TestDigitRenderer:
         """Matte contour should be the outermost (largest area)."""
         pipe = GlyphPipeline(font_path, segment_count=16)
         glyph = pipe.process_glyph("8")
-        renderer = DigitRenderer()
+        renderer = GlyphRenderer()
         rendered = renderer.render(glyph)
 
         # Matte should be present for multi-contour glyphs

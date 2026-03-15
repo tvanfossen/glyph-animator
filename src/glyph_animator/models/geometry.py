@@ -91,6 +91,15 @@ class Contour(BaseModel):
     def start_points(self) -> list[Point]:
         return [seg.p0 for seg in self.segments]
 
+    def to_tuples(self) -> list[tuple[tuple[float, float], ...]]:
+        """Convert to list of 4-point tuples for algorithm functions."""
+        return [seg.as_tuples() for seg in self.segments]
+
+    @classmethod
+    def from_tuples(cls, segs: list) -> Contour:
+        """Create from list of 4-point tuples."""
+        return cls(segments=[BezierSegment.from_tuples(s) for s in segs])
+
 
 class GlyphData(BaseModel):
     """Complete extracted + processed glyph data."""

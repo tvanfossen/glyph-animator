@@ -11,8 +11,8 @@ from glyph_animator.lottie.builder import (
     static_shape,
 )
 from glyph_animator.lottie.paths import contour_to_lottie_path, offset_contour
-from glyph_animator.pipeline.glyph_pipeline import GlyphPipeline, _contour_to_tuples
-from glyph_animator.renderer.digit_renderer import DigitRenderer
+from glyph_animator.pipeline.glyph_pipeline import GlyphPipeline
+from glyph_animator.renderer.glyph_renderer import GlyphRenderer
 
 FONT_PATH = Path.home() / "Projects/greenwood-clock/components/fonts/fonts/Nunito-ExtraBold.ttf"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output" / "lottie"
@@ -39,7 +39,7 @@ def generate_digit_outline(char, pipeline, renderer):
         [0.5, 0.9, 1.0, 1],
     ]
     for i, ol in enumerate(rendered.outline_layers):
-        segs = _contour_to_tuples(ol.contour)
+        segs = ol.contour.to_tuples()
         canvas_segs = offset_contour(segs, ox, oy, h)
         path = contour_to_lottie_path(canvas_segs)
         color = outline_colors[i % len(outline_colors)]
@@ -49,7 +49,7 @@ def generate_digit_outline(char, pipeline, renderer):
     # Filled shape (front)
     fill_items = []
     for ci, contour in enumerate(rendered.fitted_contours):
-        segs = _contour_to_tuples(contour)
+        segs = contour.to_tuples()
         canvas_segs = offset_contour(segs, ox, oy, h)
         path = contour_to_lottie_path(canvas_segs)
         fill_items.append(static_shape(f"fill-{ci}", path))
@@ -63,7 +63,7 @@ def generate_digit_outline(char, pipeline, renderer):
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     pipeline = GlyphPipeline(FONT_PATH, segment_count=64)
-    renderer = DigitRenderer(n_outline_layers=3, n_arc_samples=100)
+    renderer = GlyphRenderer(n_outline_layers=3, n_arc_samples=100)
 
     for char in "3805":
         print(f"Generating digit '{char}' with outlines...", end="")

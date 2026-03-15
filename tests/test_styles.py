@@ -3,7 +3,7 @@
 import pytest
 
 from glyph_animator.pipeline.glyph_pipeline import GlyphPipeline
-from glyph_animator.renderer.digit_renderer import DigitRenderer
+from glyph_animator.renderer.glyph_renderer import GlyphRenderer
 from glyph_animator.styles.morph import MorphStyle
 from glyph_animator.styles.registry import get_style_class, list_styles
 
@@ -24,7 +24,7 @@ class TestRegistry:
 class TestMorphStyle:
     def test_creation(self, font_path):
         pipe = GlyphPipeline(font_path, segment_count=16)
-        renderer = DigitRenderer()
+        renderer = GlyphRenderer()
         style = MorphStyle(duration_frames=30)
 
         glyph = pipe.process_glyph("3")
@@ -36,7 +36,7 @@ class TestMorphStyle:
 
     def test_destruction(self, font_path):
         pipe = GlyphPipeline(font_path, segment_count=16)
-        renderer = DigitRenderer()
+        renderer = GlyphRenderer()
         style = MorphStyle(duration_frames=30)
 
         glyph = pipe.process_glyph("3")
@@ -47,7 +47,7 @@ class TestMorphStyle:
 
     def test_transition(self, font_path):
         pipe = GlyphPipeline(font_path, segment_count=16)
-        renderer = DigitRenderer()
+        renderer = GlyphRenderer()
         style = MorphStyle(duration_frames=30)
 
         glyph_a = pipe.process_glyph("3")

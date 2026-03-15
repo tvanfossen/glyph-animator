@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw
 from glyph_animator.algorithms.curves import eval_cubic
 from glyph_animator.algorithms.matching import morph_contours
 from glyph_animator.font.extractor import FontExtractor
-from glyph_animator.pipeline.glyph_pipeline import GlyphPipeline, _contour_to_tuples
+from glyph_animator.pipeline.glyph_pipeline import GlyphPipeline
 
 FONT_PATH = Path.home() / "Projects/greenwood-clock/components/fonts/fonts/Nunito-ExtraBold.ttf"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output" / "verify"
@@ -77,8 +77,8 @@ def render_morph_strip(char_a, char_b, pipeline, out_dir=None):
         draw.text((10, 5), f"'{char_a}'→'{char_b}' α={alpha:.2f}", fill=(200, 200, 200))
 
         for pair in pairs:
-            ca = _contour_to_tuples(pair.contour_a)
-            cb = _contour_to_tuples(pair.contour_b)
+            ca = pair.contour_a.to_tuples()
+            cb = pair.contour_b.to_tuples()
             morphed = morph_contours(ca, cb, alpha)
             _draw_contour(draw, morphed, glyph_a.bounds, (100, 200, 255), 2)
 

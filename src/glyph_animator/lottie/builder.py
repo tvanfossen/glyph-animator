@@ -34,6 +34,10 @@ class LottieBuilder:
     def frames(self, value: int) -> None:
         self._frames = value
 
+    def add_layer(self, layer_dict: dict) -> None:
+        """Add a pre-built layer dict. Layers are ordered front-to-back."""
+        self._layers.append(layer_dict)
+
     def add_shape_layer(
         self,
         name: str,

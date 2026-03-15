@@ -19,7 +19,7 @@ from glyph_animator.lottie.builder import (
 from glyph_animator.lottie.easing import ORGANIC
 from glyph_animator.lottie.keyframes import shape_keyframe
 from glyph_animator.lottie.paths import contour_to_lottie_path, offset_contour
-from glyph_animator.pipeline.glyph_pipeline import GlyphPipeline, _contour_to_tuples
+from glyph_animator.pipeline.glyph_pipeline import GlyphPipeline
 
 FONT_PATH = Path.home() / "Projects/greenwood-clock/components/fonts/fonts/Nunito-ExtraBold.ttf"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output" / "lottie"
@@ -52,8 +52,8 @@ def generate_morph(pipeline, char_a, char_b):
 
     shape_items = []
     for pi, pair in enumerate(pairs):
-        ca = _contour_to_tuples(pair.contour_a)
-        cb = _contour_to_tuples(pair.contour_b)
+        ca = pair.contour_a.to_tuples()
+        cb = pair.contour_b.to_tuples()
         ca_canvas = offset_contour(ca, ox, oy, h)
         cb_canvas = offset_contour(cb, ox, oy, h)
 

@@ -124,17 +124,15 @@ def arc_length_inverse(
     target_len: float,
     total_len: float,
 ) -> tuple[float, int]:
-    """Find t such that arc_length(0, t) = target_len. Returns (t, iterations)."""
-    if total_len < ARC_LENGTH_EPSILON or target_len <= 0:
-        return 0.0, 0
-    if target_len >= total_len:
-        return 1.0, 0
+    """Find t such that arc_length(0, t) = target_len via Newton's method.
 
-    return _newton_solve(c0, c1, c2, c3, target_len, total_len)
+    Returns (t, iterations_used). Guard clauses handle degenerate/boundary cases.
+    """
+    # Boundary cases: degenerate, at start, or at end
+    if total_len < ARC_LENGTH_EPSILON or target_len <= 0 or target_len >= total_len:
+        t_boundary = 0.0 if (total_len < ARC_LENGTH_EPSILON or target_len <= 0) else 1.0
+        return t_boundary, 0
 
-
-def _newton_solve(c0, c1, c2, c3, target_len, total_len):
-    """Newton iteration loop for arc-length inverse."""
     t = target_len / total_len  # Linear initial guess
 
     for iteration in range(NEWTON_MAX_ITERATIONS):
@@ -148,16 +146,9 @@ def _newton_solve(c0, c1, c2, c3, target_len, total_len):
         speed = (dx * dx + dy * dy) ** 0.5
 
         if speed < SPEED_EPSILON:
-            t = _bisect_step(t, error)
+            t = t / 2.0 if error > 0 else (t + 1.0) / 2.0
             continue
 
         t = max(0.0, min(1.0, t - error / speed))
 
     return t, NEWTON_MAX_ITERATIONS
-
-
-def _bisect_step(t: float, error: float) -> float:
-    """One bisection step when Newton fails."""
-    if error > 0:
-        return t / 2.0
-    return (t + 1.0) / 2.0

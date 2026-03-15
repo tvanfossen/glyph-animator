@@ -2,11 +2,8 @@
 
 import math
 
-from glyph_animator.algorithms.growth import (
-    angular_sort_assignment,
-    sample_glyph_outline,
-    vogel_positions,
-)
+from glyph_animator.algorithms.growth import angular_sort_assignment, sample_glyph_outline
+from glyph_animator.algorithms.vogel import vogel_positions
 
 
 class TestVogelPositions:

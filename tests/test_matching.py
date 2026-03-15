@@ -1,14 +1,14 @@
 """Tests for contour matching, alignment, and morphing."""
 
+from glyph_animator.algorithms.alignment import align_starting_points
 from glyph_animator.algorithms.matching import (
-    align_starting_points,
     contour_centroid,
     contour_signed_area,
     hungarian_match,
     make_degenerate_contour,
     match_contours,
-    morph_contours,
 )
+from glyph_animator.algorithms.morphing import morph_contours
 
 
 # A square contour (4 segments, CW)

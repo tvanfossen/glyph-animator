@@ -1,14 +1,11 @@
-"""Floral scatter style: Vogel spiral bloom → digit outline."""
+"""Floral scatter style: Vogel spiral bloom -> digit outline."""
 
 from __future__ import annotations
 
 import math
 
-from glyph_animator.algorithms.growth import (
-    angular_sort_assignment,
-    sample_glyph_outline,
-    vogel_positions,
-)
+from glyph_animator.algorithms.growth import angular_sort_assignment, sample_glyph_outline
+from glyph_animator.algorithms.vogel import vogel_positions
 from glyph_animator.constants import GOLDEN_ANGLE, PHI
 from glyph_animator.lottie.builder import (
     animated_val,
@@ -20,8 +17,7 @@ from glyph_animator.lottie.keyframes import (
     position_keyframe_final,
 )
 from glyph_animator.models.geometry import MatchedPair
-from glyph_animator.pipeline.glyph_pipeline import _contour_to_tuples
-from glyph_animator.renderer.base import RenderedDigit
+from glyph_animator.renderer.base import RenderedGlyph
 from glyph_animator.styles.base import StyleBase
 from glyph_animator.styles.registry import register_style
 
@@ -43,27 +39,28 @@ class FloralStyle(StyleBase):
         super().__init__("floral", duration_frames, fps)
         self.n_flowers = n_flowers
 
-    def _build_creation(self, rendered: RenderedDigit) -> list[dict]:
+    def _create_layers(self, rendered: RenderedGlyph) -> list[dict]:
         """Flowers gather from Vogel spiral to digit outline."""
         data, targets = self._resolve_animation(rendered)
         return _build_gather_layers(data, targets)
 
-    def _build_destruction(self, rendered: RenderedDigit) -> list[dict]:
+    def _destroy_layers(self, rendered: RenderedGlyph) -> list[dict]:
         """Flowers scatter from digit outline back to Vogel spiral."""
         data, targets = self._resolve_animation(rendered)
         return _build_scatter_layers(data, targets)
 
-    def _build_transition(
-        self, rendered_a: RenderedDigit, rendered_b: RenderedDigit, pairs: list[MatchedPair]
+    def _transition_layers(
+        self, rendered_a: RenderedGlyph, rendered_b: RenderedGlyph, pairs: list[MatchedPair]
     ) -> list[dict]:
         """Flowers scatter from A, regroup on B."""
         data_a, targets_a = self._resolve_animation(rendered_a)
         data_b, targets_b = self._resolve_animation(rendered_b)
         return _build_transition_layers(data_a, data_b, targets_a, targets_b)
 
-    def _resolve_animation(self, rendered: RenderedDigit):
+    def _resolve_animation(self, rendered: RenderedGlyph):
         """Compute Vogel positions, outline targets, and assignments."""
-        contours, center, radius = _glyph_geometry(rendered)
+        contours = [c.to_tuples() for c in rendered.fitted_contours]
+        center, radius = self._extract_geometry(rendered)
         vogel = vogel_positions(self.n_flowers, center, radius)
         targets = sample_glyph_outline(contours, self.n_flowers)
         centroid = _centroid(targets)
@@ -71,15 +68,6 @@ class FloralStyle(StyleBase):
         lookup = {si: ti for si, ti in assignments_list}
         data = _FloralAnimationData(vogel, lookup, self.duration_frames)
         return data, targets
-
-
-def _glyph_geometry(rendered):
-    """Extract contour tuples, center, and radius from RenderedDigit."""
-    contours = [_contour_to_tuples(c) for c in rendered.fitted_contours]
-    b = rendered.glyph.bounds
-    center = ((b.x_min + b.x_max) / 2, (b.y_min + b.y_max) / 2)
-    radius = max(b.width, b.height) * 0.6
-    return contours, center, radius
 
 
 def _centroid(pts):
@@ -122,7 +110,7 @@ def _build_scatter_layers(data: _FloralAnimationData, targets: list) -> list[dic
 
 
 def _build_transition_layers(data_a, data_b, targets_a, targets_b):
-    """Scatter from A → Vogel → gather to B."""
+    """Scatter from A -> Vogel -> gather to B."""
     layers = []
     half = data_a.duration // 2
 
@@ -141,7 +129,7 @@ def _build_transition_layers(data_a, data_b, targets_a, targets_b):
 
 
 def _spatial_keyframe(frame, start, end):
-    """Position keyframe with spatial tangents from start→end."""
+    """Position keyframe with spatial tangents from start->end."""
     dx, dy = (end[0] - start[0]) / 6, (end[1] - start[1]) / 6
     return position_keyframe(frame, start[0], start[1], to=(dx, dy, 0), ti=(-dx, -dy, 0))
 

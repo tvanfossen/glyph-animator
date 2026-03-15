@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from glyph_animator.algorithms.matching import align_starting_points, match_contours
+from glyph_animator.algorithms.alignment import align_starting_points
+from glyph_animator.algorithms.matching import match_contours
 from glyph_animator.algorithms.resampling import resample_contour
 from glyph_animator.constants import DEFAULT_SEGMENT_COUNT
 from glyph_animator.font.extractor import FontExtractor
 from glyph_animator.models.geometry import (
-    BezierSegment,
     Contour,
     GlyphData,
     MatchedPair,
@@ -60,8 +60,8 @@ class GlyphPipeline(PipelineBase[str, GlyphData]):
             "match", f"'{char_a}' ({len(glyph_a.contours)}) ↔ '{char_b}' ({len(glyph_b.contours)})"
         )
 
-        contours_a = [_contour_to_tuples(c) for c in glyph_a.contours]
-        contours_b = [_contour_to_tuples(c) for c in glyph_b.contours]
+        contours_a = [c.to_tuples() for c in glyph_a.contours]
+        contours_b = [c.to_tuples() for c in glyph_b.contours]
 
         pairs = match_contours(contours_a, contours_b, self._segment_count)
 
@@ -72,8 +72,8 @@ class GlyphPipeline(PipelineBase[str, GlyphData]):
             is_degen_b = _is_degenerate(cb)
             result.append(
                 MatchedPair(
-                    contour_a=_tuples_to_contour(ca),
-                    contour_b=_tuples_to_contour(cb_aligned),
+                    contour_a=Contour.from_tuples(ca),
+                    contour_b=Contour.from_tuples(cb_aligned),
                     rotation_offset=k,
                     is_degenerate_a=is_degen_a,
                     is_degenerate_b=is_degen_b,
@@ -87,20 +87,10 @@ class GlyphPipeline(PipelineBase[str, GlyphData]):
         """Resample all contours to uniform segment count."""
         result = []
         for contour in glyph.contours:
-            seg_tuples = _contour_to_tuples(contour)
+            seg_tuples = contour.to_tuples()
             resampled = resample_contour(seg_tuples, self._segment_count)
-            result.append(_tuples_to_contour(resampled))
+            result.append(Contour.from_tuples(resampled))
         return result
-
-
-def _contour_to_tuples(contour: Contour) -> list[Seg]:
-    """Convert Contour model to list of tuple segments for algorithm functions."""
-    return [seg.as_tuples() for seg in contour.segments]
-
-
-def _tuples_to_contour(segs: list[Seg]) -> Contour:
-    """Convert list of tuple segments back to Contour model."""
-    return Contour(segments=[BezierSegment.from_tuples(s) for s in segs])
 
 
 def _is_degenerate(contour: list[Seg]) -> bool:

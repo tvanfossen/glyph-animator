@@ -8,14 +8,12 @@ from glyph_animator.lottie.builder import (
     animated_val,
     shape_group,
     static_shape,
-    static_val,
 )
 from glyph_animator.lottie.easing import EASE_IN_OUT, ORGANIC
 from glyph_animator.lottie.keyframes import opacity_keyframe, shape_keyframe
 from glyph_animator.lottie.paths import contour_to_lottie_path
 from glyph_animator.models.geometry import MatchedPair
-from glyph_animator.pipeline.glyph_pipeline import _contour_to_tuples
-from glyph_animator.renderer.base import RenderedDigit
+from glyph_animator.renderer.base import RenderedGlyph
 from glyph_animator.styles.base import StyleBase
 from glyph_animator.styles.registry import register_style
 
@@ -31,26 +29,38 @@ class MorphStyle(StyleBase):
     def __init__(self, duration_frames: int = 60, fps: int = 30):
         super().__init__("morph", duration_frames, fps)
 
-    def _build_creation(self, rendered: RenderedDigit) -> list[dict]:
-        """Fade in: opacity 0 → 100 over duration."""
-        shapes = _static_glyph_shapes(rendered)
+    def _create_layers(self, rendered: RenderedGlyph) -> list[dict]:
+        """Fade in: opacity 0 -> 100 over duration."""
+        shapes = self._static_glyph_shapes(rendered)
         opacity_kfs = [
             opacity_keyframe(0, 0, EASE_IN_OUT),
             opacity_keyframe(self.duration_frames, 100, is_final=True),
         ]
-        return [_glyph_layer("creation", shapes, opacity_kfs, self.duration_frames)]
+        return [
+            self._make_animated_layer(
+                "creation",
+                [shape_group("creation", shapes)],
+                {"o": animated_val(opacity_kfs)},
+            )
+        ]
 
-    def _build_destruction(self, rendered: RenderedDigit) -> list[dict]:
-        """Fade out: opacity 100 → 0 over duration."""
-        shapes = _static_glyph_shapes(rendered)
+    def _destroy_layers(self, rendered: RenderedGlyph) -> list[dict]:
+        """Fade out: opacity 100 -> 0 over duration."""
+        shapes = self._static_glyph_shapes(rendered)
         opacity_kfs = [
             opacity_keyframe(0, 100, EASE_IN_OUT),
             opacity_keyframe(self.duration_frames, 0, is_final=True),
         ]
-        return [_glyph_layer("destruction", shapes, opacity_kfs, self.duration_frames)]
+        return [
+            self._make_animated_layer(
+                "destruction",
+                [shape_group("destruction", shapes)],
+                {"o": animated_val(opacity_kfs)},
+            )
+        ]
 
-    def _build_transition(
-        self, rendered_a: RenderedDigit, rendered_b: RenderedDigit, pairs: list[MatchedPair]
+    def _transition_layers(
+        self, rendered_a: RenderedGlyph, rendered_b: RenderedGlyph, pairs: list[MatchedPair]
     ) -> list[dict]:
         """Shape path morph between matched contour pairs."""
         hold = 15
@@ -58,8 +68,8 @@ class MorphStyle(StyleBase):
 
         shape_items: list[dict] = []
         for pi, pair in enumerate(pairs):
-            ca = _contour_to_tuples(pair.contour_a)
-            cb = _contour_to_tuples(pair.contour_b)
+            ca = pair.contour_a.to_tuples()
+            cb = pair.contour_b.to_tuples()
             path_a = contour_to_lottie_path(ca)
             path_b = contour_to_lottie_path(cb)
 
@@ -73,58 +83,16 @@ class MorphStyle(StyleBase):
         shape_items.append(_fill([0.95, 0.95, 0.95, 1], rule=1))
         group = shape_group("glyph", shape_items)
 
-        return [
-            {
-                "ty": 4,
-                "nm": "morph-transition",
-                "sr": 1,
-                "ks": _default_ks(),
-                "ao": 0,
-                "shapes": [group],
-                "ip": 0,
-                "op": morph_end + 30,
-                "st": 0,
-            }
-        ]
+        return [self._make_shape_layer("morph-transition", [group], op=morph_end + 30)]
 
-
-def _static_glyph_shapes(rendered: RenderedDigit) -> list[dict]:
-    """Build static shape items from RenderedDigit contours."""
-    items: list[dict] = []
-    for ci, contour in enumerate(rendered.fitted_contours):
-        segs = _contour_to_tuples(contour)
-        path = contour_to_lottie_path(segs)
-        items.append(static_shape(f"contour-{ci}", path))
-    items.append(_fill([0.95, 0.95, 0.95, 1], rule=1))
-    return items
-
-
-def _glyph_layer(name, shapes, opacity_kfs, duration):
-    """Build a shape layer with animated opacity."""
-    ks = _default_ks()
-    ks["o"] = animated_val(opacity_kfs)
-    group = shape_group(name, shapes)
-    return {
-        "ty": 4,
-        "nm": name,
-        "sr": 1,
-        "ks": ks,
-        "ao": 0,
-        "shapes": [group],
-        "ip": 0,
-        "op": duration + 30,
-        "st": 0,
-    }
-
-
-def _default_ks():
-    return {
-        "p": static_val([0, 0, 0]),
-        "a": static_val([0, 0, 0]),
-        "s": static_val([100, 100, 100]),
-        "r": static_val(0),
-        "o": static_val(100),
-    }
+    def _static_glyph_shapes(self, rendered: RenderedGlyph) -> list[dict]:
+        """Build static shape items from RenderedGlyph contours."""
+        paths = self._contours_to_paths(rendered)
+        items: list[dict] = []
+        for ci, path in enumerate(paths):
+            items.append(static_shape(f"contour-{ci}", path))
+        items.append(_fill([0.95, 0.95, 0.95, 1], rule=1))
+        return items
 
 
 register_style("morph", MorphStyle)
