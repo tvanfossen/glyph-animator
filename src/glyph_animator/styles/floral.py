@@ -5,12 +5,12 @@ from __future__ import annotations
 import math
 
 from glyph_animator.algorithms.growth import angular_sort_assignment, sample_glyph_outline
+from glyph_animator.algorithms.shapes import DaisyGenerator
 from glyph_animator.algorithms.vogel import vogel_positions
-from glyph_animator.constants import GOLDEN_ANGLE, PHI
+from glyph_animator.constants import GOLDEN_ANGLE
 from glyph_animator.lottie.builder import (
     animated_val,
     make_transform,
-    static_val,
 )
 from glyph_animator.lottie.keyframes import (
     position_keyframe,
@@ -20,16 +20,6 @@ from glyph_animator.models.geometry import MatchedPair
 from glyph_animator.renderer.base import RenderedGlyph
 from glyph_animator.styles.base import StyleBase
 from glyph_animator.styles.registry import register_style
-
-FLOWER_PALETTE = [
-    [1.0, 0.51, 0.59],
-    [1.0, 0.71, 0.39],
-    [1.0, 0.39, 0.39],
-    [0.71, 0.51, 1.0],
-    [1.0, 0.86, 0.39],
-    [1.0, 0.59, 0.78],
-]
-PETAL_COUNTS = [5, 6, 5, 8, 5, 6]
 
 
 class FloralStyle(StyleBase):
@@ -147,85 +137,23 @@ def _bloom_offset(idx, duration):
     return int(((idx * GOLDEN_ANGLE / (2 * math.pi)) % 1.0) * duration * 0.3)
 
 
+_DAISY = DaisyGenerator()
+
+
 def _make_flower_layer(idx, pos_kfs, duration):
     """Build a flower shape layer with given position keyframes."""
-    n_petals = PETAL_COUNTS[idx % len(PETAL_COUNTS)]
-    color = FLOWER_PALETTE[idx % len(FLOWER_PALETTE)]
-    size_factor = 0.7 + 0.6 * ((idx * PHI) % 1.0)
-
-    petal_shapes = _flower_shapes(n_petals, size_factor, color)
-
+    shapes = [{"ty": "gr", "nm": "flower", "it": _DAISY.generate(idx)}]
     return {
         "ty": 4,
         "nm": f"flower-{idx}",
         "sr": 1,
         "ks": make_transform(pos=animated_val(pos_kfs)),
         "ao": 0,
-        "shapes": petal_shapes,
+        "shapes": shapes,
         "ip": 0,
         "op": duration + 30,
         "st": 0,
     }
-
-
-def _flower_shapes(n_petals, size_factor, color):
-    """Build petal ellipses + pistil for one flower."""
-    rx = 8.0 * size_factor
-    ry = 5.0 * size_factor
-    dist = 6.0 * size_factor
-    items = []
-
-    for i in range(n_petals):
-        angle = i * (2 * math.pi / n_petals)
-        pcx = dist * math.cos(angle)
-        pcy = dist * math.sin(angle)
-        items.append(
-            {
-                "ty": "el",
-                "nm": f"petal-{i}",
-                "p": static_val([pcx, pcy]),
-                "s": static_val([rx * 2, ry * 2]),
-            }
-        )
-
-    items.append(
-        {"ty": "fl", "nm": "fill", "c": static_val(color + [1]), "r": 1, "o": static_val(100)}
-    )
-
-    # Pistil
-    pistil_r = 3.0 * size_factor
-    items.append(
-        {
-            "ty": "el",
-            "nm": "pistil",
-            "p": static_val([0, 0]),
-            "s": static_val([pistil_r * 2, pistil_r * 2]),
-        }
-    )
-    pistil_col = [color[0] * 0.6, color[1] * 0.6, color[2] * 0.3, 1]
-    items.append(
-        {
-            "ty": "fl",
-            "nm": "pistil-fill",
-            "c": static_val(pistil_col),
-            "r": 1,
-            "o": static_val(100),
-        }
-    )
-
-    # Group transform (must be last)
-    items.append(
-        {
-            "ty": "tr",
-            "p": static_val([0, 0]),
-            "a": static_val([0, 0]),
-            "s": static_val([100, 100]),
-            "r": static_val(0),
-            "o": static_val(100),
-        }
-    )
-
-    return [{"ty": "gr", "nm": "flower", "it": items}]
 
 
 register_style("floral", FloralStyle)
