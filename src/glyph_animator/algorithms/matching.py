@@ -125,7 +125,7 @@ def make_degenerate_contour(center: Pt, n_segments: int) -> list[Seg]:
     return [(center, center, center, center)] * n_segments
 
 
-class _ContourSet:
+class ContourSet:
     """Bundle of contours + their computed centroids and areas."""
 
     __slots__ = ("contours", "centroids", "areas", "n_real")
@@ -154,8 +154,8 @@ def match_contours(
     target_n: int,
 ) -> list[tuple[list[Seg], list[Seg]]]:
     """Match contours between two glyphs, padding with degenerates if needed."""
-    set_a = _ContourSet(contours_a)
-    set_b = _ContourSet(contours_b)
+    set_a = ContourSet(contours_a)
+    set_b = ContourSet(contours_b)
     k = max(set_a.n_real, set_b.n_real)
 
     set_a.pad_to(k, set_b.centroids, target_n)
@@ -166,7 +166,7 @@ def match_contours(
     return _finalize_pairs(assignment, set_a, set_b, target_n)
 
 
-def _build_cost_matrix(set_a: _ContourSet, set_b: _ContourSet, k: int):
+def _build_cost_matrix(set_a: ContourSet, set_b: ContourSet, k: int):
     """Build assignment cost matrix from centroids and areas."""
     all_c = set_a.centroids + set_b.centroids
     max_dist_sq = max(
@@ -199,7 +199,7 @@ def _winding_penalty(area_a: float, area_b: float) -> float:
     return 0.0
 
 
-def _finalize_pairs(assignment, set_a: _ContourSet, set_b: _ContourSet, target_n):
+def _finalize_pairs(assignment, set_a: ContourSet, set_b: ContourSet, target_n):
     """Build final pairs, relocating degenerates to partner centroids."""
     pairs = []
     for i, j in assignment:

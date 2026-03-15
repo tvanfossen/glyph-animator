@@ -2,7 +2,7 @@
 id: P1-20260315-003
 title: "Session 3: Styles + Generators + Docs + CLI"
 priority: 1
-status: BACKLOG
+status: ACTIVE
 created: 2026-03-15
 updated: 2026-03-15
 session: 3
@@ -10,6 +10,42 @@ depends_on: P1-20260315-002
 ---
 
 # Session 3: Styles + Generators
+
+## Implementation Log (in progress)
+
+### PAUSED — Architecture refactor required
+
+**Problem identified:** Base classes are thin ABCs/interfaces, not strong base classes
+with 80%+ logic. Violates global CLAUDE.md "Strong base classes" rule. Concrete classes
+duplicate boilerplate (canvas sizing, coord transform, builder setup, Lottie dict construction).
+
+**What exists (needs refactor):**
+- `algorithms/growth.py` — VogelSpiralPlacer, AngularSortAssigner, ContourSampler, LSystemGrower (226L, needs split)
+- `algorithms/spatial.py` — RayCastingTest, InteriorSampler (111L, OK)
+- `styles/base.py` — StyleBase ABC (interface only, needs 80% logic)
+- `styles/registry.py` — name→class lookup (OK)
+- `styles/morph.py` — MorphStyle (needs refactor to thin concrete)
+- `styles/floral.py` — FloralStyle (269L, needs refactor + split flower geometry to shapes)
+- `generators/base.py` — GeneratorBase (interface only, needs 80% logic)
+- `generators/single_glyph.py` — SingleGlyphGenerator (needs refactor)
+- `generators/transition.py` — TransitionGenerator (needs refactor)
+- `generators/clock.py` — ClockGenerator (needs refactor)
+- 104 tests passing
+
+**Refactor plan (task #14):**
+1. StyleBase — template methods own canvas/builder/coords/background. Concrete styles only return content layers.
+2. GeneratorBase — owns pipeline+renderer+canvas+output. Concrete generators only specify glyphs/pairs.
+3. Rename Digit* → Glyph* throughout (GlyphRendererBase, RenderedGlyph).
+4. GlyphRendererBase — owns arc sampling, matte selection, outline construction.
+5. Split oversized files: matching.py, growth.py, floral.py.
+6. Extract Contour.to_tuples() from pipeline private function. Canvas sizing utility.
+7. Fix _newton_solve workaround in arc_length.py.
+
+**After refactor, resume with:**
+- Remaining styles: vine_garden, vine_lsystem, vine_clipped, comic
+- Remaining generators: font_file
+- CLI, configs, docs, README
+- Stop points 1-5
 
 ## Scope
 
